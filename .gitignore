@@ -1,0 +1,14 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+*.Rhistory
+*.RData
+reports/*.html
+reports/*.pdf
+reports/*.docx
+!reports/.gitkeep
+.vercel
+__pycache__/
+*.pyc
+.DS_Store

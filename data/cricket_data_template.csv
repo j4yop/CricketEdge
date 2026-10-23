@@ -1,0 +1,3 @@
+"match_id","date","player","team","opponent","venue","innings","batting_position","runs","balls_faced","fours","sixes","dismissals","wickets_lost","innings_total","overs","match_condition"
+"M101","2024-01-19","V. Kohli","India","South Africa","Melbourne",1,3,17,15,1,2,1,7,193,20,"Pace-friendly"
+"M101","2024-01-19","R. Sharma","India","South Africa","Melbourne",1,1,56,45,6,5,1,9,193,20,"Pace-friendly"
