@@ -6,6 +6,9 @@
 [![Visuals](https://img.shields.io/badge/ggplot2-3.5+-emerald.svg)](https://ggplot2.tidyverse.org/)
 [![Theme](https://img.shields.io/badge/bslib-Dark_Navy-amber.svg)](https://rstudio.github.io/bslib/)
 [![Tests](https://img.shields.io/badge/Tests-82%20Passed-brightgreen.svg)]()
+[![Deployment](https://img.shields.io/badge/Deployed_App-Vercel-black?logo=vercel&logoColor=white)](https://cricket-edge-analyzer.vercel.app)
+
+> 🚀 **Live Deployed Web Application:** [https://cricket-edge-analyzer.vercel.app](https://cricket-edge-analyzer.vercel.app)
 
 **CricketEdge** is an end-to-end, statistically rigorous sports performance analyzer developed in **R** and **Shiny** for **RStudio**. It bridges university-level statistical theory with modern cricket analytics, allowing users to inspect batting performance, model scoring probabilities, perform inferential hypothesis tests, fit linear regressions, and conduct analysis of variance (ANOVA) with uncompromising graph fidelity.
 
