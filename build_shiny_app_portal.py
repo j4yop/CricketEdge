@@ -2,11 +2,21 @@
 import json
 import glob
 import os
+import csv
 import html as html_lib
 
-# Load raw sample data
-with open('/tmp/cricket_data_embedded.json') as f:
-    raw_data = json.load(f)
+# Load raw sample data directly from CSV
+raw_data = []
+with open('data/sample_cricket_data.csv', 'r') as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+        for k in ['innings', 'batting_position', 'runs', 'balls_faced', 'fours', 'sixes', 'dismissals', 'wickets_lost', 'innings_total', 'overs']:
+            if k in row and row[k] != '':
+                try:
+                    row[k] = int(row[k]) if '.' not in row[k] else float(row[k])
+                except ValueError:
+                    pass
+        raw_data.append(row)
 
 # Load all R scripts
 r_code_dict = {}
@@ -402,8 +412,10 @@ html_content = f"""<!DOCTYPE html>
       <li class="nav-item" onclick="showTab('code', this)">💻 R Codebase</li>
     </ul>
     <div class="navbar-right">
+      <a href="CricketEdge_Lab_Report.pdf" target="_blank" class="btn btn-secondary" style="font-size: 0.76rem; padding: 5px 10px;">📄 PDF Report</a>
+      <a href="CricketEdge_Lab_Report.docx" download class="btn btn-primary" style="font-size: 0.76rem; padding: 5px 10px;">📥 DOCX Report</a>
       <div class="mode-badge">
-        <span class="mode-dot"></span> Sample Mode (261 Innings)
+        <span class="mode-dot"></span> 260 Innings Sample
       </div>
     </div>
   </header>
