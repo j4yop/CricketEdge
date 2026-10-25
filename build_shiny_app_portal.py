@@ -3,12 +3,10 @@ import json
 import glob
 import os
 import csv
-import html as html_lib
 
-# Get script directory for robust relative paths
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Load raw sample data directly from CSV
+# Load raw sample data from CSV
 raw_data = []
 csv_path = os.path.join(SCRIPT_DIR, 'data', 'sample_cricket_data.csv')
 with open(csv_path, 'r', encoding='utf-8') as f:
@@ -38,12 +36,14 @@ html_content = f"""<!DOCTYPE html>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CricketEdge — Statistical Cricket Performance Analyzer</title>
-  <meta name="description" content="End-to-End Statistical Cricket Performance Analyzer built for BMAT202P Probability and Statistics at VIT Chennai." />
-  
-  <!-- Fonts & Libraries -->
+  <meta name="description" content="Applied statistical sports performance analytics platform in R and Shiny for BMAT202P at VIT Chennai." />
+
+  <!-- Typography: Plus Jakarta Sans & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js 4.4 -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
   <style>
@@ -51,34 +51,45 @@ html_content = f"""<!DOCTYPE html>
       --bg-canvas: #f8fafc;
       --surface: #ffffff;
       --surface-subtle: #f1f5f9;
+      --surface-muted: #e2e8f0;
       --border: #e2e8f0;
       --border-strong: #cbd5e1;
       --text-main: #0f172a;
       --text-body: #334155;
       --text-muted: #64748b;
       --text-faint: #94a3b8;
+      
+      --navy: #0f172a;
+      --navy-hover: #1e293b;
       --primary: #0284c7;
       --primary-hover: #0369a1;
       --primary-subtle: #f0f9ff;
       --primary-border: #bae6fd;
-      --navy: #0f172a;
-      --navy-hover: #1e293b;
+      
       --success: #059669;
       --success-subtle: #ecfdf5;
       --success-border: #a7f3d0;
+      
       --warning: #d97706;
       --warning-subtle: #fffbeb;
       --warning-border: #fde68a;
+      
       --danger: #e11d48;
       --danger-subtle: #fff1f2;
       --danger-border: #fecdd3;
+
       --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
       --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.06), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
       --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
     }}
 
     * {{ box-sizing: border-box; margin: 0; padding: 0; }}
-    
+
+    ::selection {{
+      background: var(--primary);
+      color: #ffffff;
+    }}
+
     /* Custom Modern Slim Scrollbars */
     ::-webkit-scrollbar {{
       width: 6px;
@@ -100,7 +111,7 @@ html_content = f"""<!DOCTYPE html>
     }}
 
     body {{
-      background: var(--bg-canvas);
+      background-color: var(--bg-canvas);
       color: var(--text-body);
       font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       line-height: 1.5;
@@ -111,31 +122,31 @@ html_content = f"""<!DOCTYPE html>
       font-feature-settings: 'tnum' 1;
     }}
 
-    /* Top Institutional Header */
-    .top-bar {{
+    /* Top Academic Header */
+    .header-institution {{
       background: #ffffff;
       border-bottom: 1px solid var(--border);
-      padding: 6px 24px;
-      font-size: 0.72rem;
+      padding: 7px 24px;
+      font-size: 0.73rem;
       color: var(--text-muted);
       display: flex;
       justify-content: space-between;
       align-items: center;
       font-weight: 500;
     }}
-    .top-bar-left {{
+    .header-institution-left {{
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }}
-    .top-bar-badge {{
+    .tag-course {{
       background: var(--surface-subtle);
       border: 1px solid var(--border);
       color: var(--text-main);
-      padding: 2px 8px;
+      padding: 1px 7px;
       border-radius: 4px;
       font-weight: 700;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.03em;
     }}
 
     /* Navbar */
@@ -146,7 +157,7 @@ html_content = f"""<!DOCTYPE html>
       display: flex;
       align-items: center;
       justify-content: space-between;
-      height: 62px;
+      height: 64px;
       position: sticky;
       top: 0;
       z-index: 100;
@@ -156,33 +167,32 @@ html_content = f"""<!DOCTYPE html>
       display: flex;
       align-items: center;
       gap: 10px;
-      font-size: 1.22rem;
+      font-size: 1.25rem;
       font-weight: 800;
       color: var(--navy);
       text-decoration: none;
       letter-spacing: -0.4px;
     }}
     .brand-mark {{
-      width: 28px;
-      height: 28px;
+      width: 32px;
+      height: 32px;
       background: var(--navy);
-      border-radius: 6px;
+      border-radius: 7px;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: white;
-      font-size: 15px;
+      color: #ffffff;
     }}
     .navbar-nav {{
       display: flex;
       align-items: center;
-      gap: 3px;
+      gap: 2px;
       list-style: none;
       overflow-x: auto;
       padding: 4px 0;
     }}
     .nav-item {{
-      padding: 7px 12px;
+      padding: 7px 11px;
       color: var(--text-muted);
       text-decoration: none;
       font-size: 0.83rem;
@@ -191,8 +201,16 @@ html_content = f"""<!DOCTYPE html>
       cursor: pointer;
       white-space: nowrap;
       transition: all 0.15s ease;
-      border: 1px solid transparent;
+      display: flex;
+      align-items: center;
+      gap: 6px;
       user-select: none;
+      border: 1px solid transparent;
+    }}
+    .nav-item svg {{
+      width: 15px;
+      height: 15px;
+      stroke-width: 2;
     }}
     .nav-item:hover {{
       color: var(--text-main);
@@ -209,7 +227,7 @@ html_content = f"""<!DOCTYPE html>
       align-items: center;
       gap: 10px;
     }}
-    .status-pill {{
+    .status-indicator {{
       background: var(--success-subtle);
       border: 1px solid var(--success-border);
       color: var(--success);
@@ -229,56 +247,82 @@ html_content = f"""<!DOCTYPE html>
       background: var(--success);
     }}
 
+    /* Buttons */
+    .btn {{
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: 7px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s ease;
+      border: 1px solid transparent;
+      user-select: none;
+    }}
+    .btn svg {{
+      width: 14px;
+      height: 14px;
+    }}
+    .btn-primary {{
+      background: var(--navy);
+      color: #ffffff;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+    }}
+    .btn-primary:hover {{
+      background: var(--navy-hover);
+      transform: translateY(-1px);
+    }}
+    .btn-secondary {{
+      background: #ffffff;
+      color: var(--text-body);
+      border-color: var(--border-strong);
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }}
+    .btn-secondary:hover {{
+      background: var(--surface-subtle);
+      color: var(--text-main);
+      border-color: #94a3b8;
+    }}
+
     /* Main Container */
     .main-container {{
-      max-width: 1400px;
+      max-width: 1380px;
       margin: 0 auto;
       padding: 24px;
       flex: 1;
       width: 100%;
     }}
 
-    /* KPI Grid */
-    .kpi-row {{
+    /* Metrics Ribbon (High-Density Analytical Strip) */
+    .metrics-ribbon {{
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 9px;
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px;
       margin-bottom: 24px;
-    }}
-    .kpi-box {{
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 16px 20px;
-      position: relative;
       box-shadow: var(--shadow-sm);
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      overflow: hidden;
     }}
-    .kpi-box:hover {{
-      transform: translateY(-1px);
-      box-shadow: var(--shadow-md);
+    .metric-cell {{
+      padding: 16px 20px;
+      border-right: 1px solid var(--border);
     }}
-    .kpi-box::before {{
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0; height: 3px;
-      background: var(--primary);
-      border-top-left-radius: 10px;
-      border-top-right-radius: 10px;
+    .metric-cell:last-child {{
+      border-right: none;
     }}
-    .kpi-box.emerald::before {{ background: var(--success); }}
-    .kpi-box.amber::before {{ background: var(--warning); }}
-    .kpi-box.navy::before {{ background: var(--navy); }}
-    .kpi-box.danger::before {{ background: var(--danger); }}
-    
-    .kpi-val {{
+    .metric-val {{
       font-size: 1.85rem;
       font-weight: 800;
       color: var(--text-main);
       letter-spacing: -0.5px;
-      line-height: 1.15;
+      line-height: 1.1;
+      font-variant-numeric: tabular-nums;
     }}
-    .kpi-lbl {{
+    .metric-lbl {{
       font-size: 0.72rem;
       font-weight: 700;
       color: var(--text-muted);
@@ -286,35 +330,36 @@ html_content = f"""<!DOCTYPE html>
       letter-spacing: 0.05em;
       margin-top: 4px;
     }}
-    .kpi-sub {{
-      font-size: 0.73rem;
+    .metric-sub {{
+      font-size: 0.72rem;
       color: var(--text-faint);
       margin-top: 2px;
     }}
 
-    /* Card Panels */
+    /* Cards */
     .card {{
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: 9px;
       padding: 20px 22px;
       margin-bottom: 24px;
       box-shadow: var(--shadow-sm);
     }}
-    .card-header-title {{
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: var(--text-main);
-      margin-bottom: 16px;
+    .card-header {{
       display: flex;
       align-items: center;
       justify-content: space-between;
+      margin-bottom: 16px;
+    }}
+    .card-title {{
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-main);
       letter-spacing: -0.2px;
     }}
     .card-subtitle {{
       font-size: 0.8rem;
       color: var(--text-muted);
-      font-weight: 400;
       margin-top: -12px;
       margin-bottom: 16px;
     }}
@@ -334,66 +379,69 @@ html_content = f"""<!DOCTYPE html>
       .grid-2, .grid-3 {{ grid-template-columns: 1fr; }}
     }}
 
-    /* Form Controls */
-    .form-group {{
-      margin-bottom: 14px;
+    /* Segmented Control Pill Toggles */
+    .segmented-control {{
+      display: inline-flex;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 2px;
+      gap: 2px;
     }}
-    .form-label {{
-      display: block;
+    .segment-btn {{
+      padding: 4px 10px;
       font-size: 0.75rem;
-      font-weight: 700;
+      font-weight: 600;
       color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      margin-bottom: 6px;
+      background: transparent;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.12s ease;
+      font-family: inherit;
     }}
+    .segment-btn:hover {{
+      color: var(--text-main);
+    }}
+    .segment-btn.active {{
+      background: #ffffff;
+      color: var(--text-main);
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+      font-weight: 700;
+    }}
+
+    /* Form Inputs */
     .form-control {{
       width: 100%;
-      background: var(--surface);
+      background: #ffffff;
       border: 1px solid var(--border-strong);
       color: var(--text-main);
       padding: 8px 12px;
       border-radius: 7px;
-      font-size: 0.86rem;
+      font-size: 0.85rem;
       outline: none;
-      transition: all 0.15s ease;
       font-family: inherit;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }}
     .form-control:focus {{
       border-color: var(--primary);
       box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
     }}
-
-    /* Filter Bar */
-    .filter-bar {{
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      align-items: center;
-      padding: 14px 18px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 9px;
-      margin-bottom: 18px;
-      box-shadow: var(--shadow-sm);
-    }}
-    .filter-group {{
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }}
-    .filter-label {{
-      font-size: 0.78rem;
+    .form-label {{
+      display: block;
+      font-size: 0.74rem;
       font-weight: 700;
       color: var(--text-muted);
-      white-space: nowrap;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 5px;
     }}
 
-    /* Tables */
-    .table-responsive {{
-      overflow-x: auto;
-      border-radius: 8px;
+    /* Table Styles */
+    .table-container {{
       border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow-x: auto;
     }}
     table {{
       width: 100%;
@@ -411,6 +459,11 @@ html_content = f"""<!DOCTYPE html>
       letter-spacing: 0.05em;
       white-space: nowrap;
       border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+    }}
+    th:hover {{
+      color: var(--text-main);
     }}
     td {{
       padding: 10px 14px;
@@ -429,13 +482,13 @@ html_content = f"""<!DOCTYPE html>
       text-align: right;
     }}
     .tabular {{
-      font-feature-settings: 'tnum' 1;
+      font-variant-numeric: tabular-nums;
     }}
 
     /* Badges */
     .badge {{
       display: inline-block;
-      padding: 3px 9px;
+      padding: 3px 8px;
       border-radius: 12px;
       font-size: 0.72rem;
       font-weight: 700;
@@ -462,129 +515,88 @@ html_content = f"""<!DOCTYPE html>
       border: 1px solid var(--primary-border);
     }}
 
-    /* Formula & Console Boxes */
-    .code-box {{
-      background: #0f172a;
-      border: 1px solid #1e293b;
-      border-left: 3px solid var(--primary);
-      padding: 14px 18px;
-      border-radius: 8px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.81rem;
-      color: #38bdf8;
-      overflow-x: auto;
-      line-height: 1.6;
-    }}
-    .math-callout {{
-      background: var(--surface-subtle);
-      border: 1px solid var(--border);
-      border-left: 3px solid var(--primary);
-      padding: 12px 16px;
-      border-radius: 6px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.82rem;
-      color: var(--navy);
-      line-height: 1.5;
-      margin: 12px 0;
-    }}
-
-    /* Tab Panels */
-    .tab-pane {{ display: none; }}
-    .tab-pane.active {{ display: block; }}
-
-    /* Buttons */
-    .btn {{
+    /* Team Pill Badges */
+    .team-badge {{
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 7px 14px;
-      border-radius: 7px;
-      font-size: 0.82rem;
-      font-weight: 600;
-      cursor: pointer;
-      text-decoration: none;
-      transition: all 0.15s ease;
-      border: 1px solid transparent;
-      user-select: none;
+      gap: 5px;
+      font-weight: 700;
+      font-size: 0.72rem;
+      padding: 2px 7px;
+      border-radius: 4px;
     }}
-    .btn-primary {{
-      background: var(--navy);
-      color: #ffffff;
-      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
-    }}
-    .btn-primary:hover {{
-      background: var(--navy-hover);
-      transform: translateY(-1px);
-    }}
-    .btn-accent {{
-      background: var(--primary);
-      color: #ffffff;
-    }}
-    .btn-accent:hover {{
-      background: var(--primary-hover);
-    }}
-    .btn-secondary {{
-      background: #ffffff;
-      color: var(--text-body);
-      border-color: var(--border-strong);
-      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-    }}
-    .btn-secondary:hover {{
-      background: var(--surface-subtle);
-      color: var(--text-main);
-      border-color: #94a3b8;
-    }}
+    .team-ind {{ background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }}
+    .team-aus {{ background: #fefce8; color: #a16207; border: 1px solid #fef08a; }}
+    .team-eng {{ background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }}
+    .team-nz  {{ background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }}
 
-    /* Head-to-head Comparison Card */
-    .h2h-grid {{
+    /* Head-to-Head Profiler */
+    .h2h-container {{
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 20px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-sm);
+    }}
+    .h2h-controls {{
       display: grid;
       grid-template-columns: 1fr auto 1fr;
       gap: 16px;
       align-items: center;
       margin-bottom: 20px;
     }}
-    .h2h-player-card {{
+    .player-select-card {{
       background: var(--surface-subtle);
       border: 1px solid var(--border);
-      border-radius: 9px;
-      padding: 16px;
-      text-align: center;
+      border-radius: 8px;
+      padding: 14px 16px;
     }}
-    .h2h-player-card.active-p1 {{
-      border-color: var(--primary);
-      background: #f0f9ff;
+    .player-select-card.p1 {{
+      border-left: 3px solid var(--primary);
     }}
-    .h2h-player-card.active-p2 {{
-      border-color: var(--danger);
-      background: #fff1f2;
+    .player-select-card.p2 {{
+      border-left: 3px solid var(--danger);
     }}
-    .h2h-name {{
-      font-size: 1.15rem;
-      font-weight: 800;
-      color: var(--text-main);
+    .battle-bars {{
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 16px;
     }}
-    .h2h-team {{
+    .battle-row {{
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }}
+    .battle-header {{
+      display: flex;
+      justify-content: space-between;
       font-size: 0.75rem;
-      color: var(--text-muted);
-      font-weight: 600;
-      text-transform: uppercase;
+      font-weight: 700;
     }}
-    .vs-badge {{
-      font-size: 0.85rem;
-      font-weight: 800;
-      color: var(--text-muted);
-      background: var(--surface);
-      border: 1px solid var(--border);
-      padding: 6px 10px;
-      border-radius: 50%;
+    .battle-track {{
+      display: flex;
+      height: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+      background: var(--surface-subtle);
+    }}
+    .battle-fill-p1 {{
+      background: var(--primary);
+      transition: width 0.3s ease;
+    }}
+    .battle-fill-p2 {{
+      background: var(--danger);
+      transition: width 0.3s ease;
     }}
 
-    /* Code Viewer Tab */
-    .code-viewer-layout {{
+    /* Code Viewer */
+    .code-viewer-grid {{
       display: grid;
-      grid-template-columns: 280px 1fr;
+      grid-template-columns: 260px 1fr;
       gap: 16px;
-      height: 650px;
+      height: 640px;
     }}
     .file-tree {{
       background: var(--surface);
@@ -593,7 +605,7 @@ html_content = f"""<!DOCTYPE html>
       padding: 10px;
       overflow-y: auto;
     }}
-    .file-item {{
+    .file-entry {{
       padding: 8px 12px;
       border-radius: 6px;
       font-size: 0.82rem;
@@ -604,22 +616,28 @@ html_content = f"""<!DOCTYPE html>
       gap: 8px;
       font-family: 'JetBrains Mono', monospace;
       transition: all 0.12s ease;
-      margin-bottom: 3px;
+      margin-bottom: 2px;
     }}
-    .file-item:hover {{
+    .file-entry:hover {{
       background: var(--surface-subtle);
       color: var(--text-main);
     }}
-    .file-item.active {{
+    .file-entry.active {{
       background: var(--primary-subtle);
       color: var(--primary);
       border: 1px solid var(--primary-border);
       font-weight: 600;
     }}
-    .code-viewer-header {{
+    .editor-pane {{
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      overflow: hidden;
+    }}
+    .editor-topbar {{
       background: #0f172a;
-      border-top-left-radius: 8px;
-      border-top-right-radius: 8px;
       padding: 10px 16px;
       display: flex;
       align-items: center;
@@ -631,9 +649,6 @@ html_content = f"""<!DOCTYPE html>
     }}
     .code-display {{
       background: #0b1120;
-      border: 1px solid #1e293b;
-      border-bottom-left-radius: 8px;
-      border-bottom-right-radius: 8px;
       padding: 16px;
       overflow: auto;
       font-family: 'JetBrains Mono', monospace;
@@ -641,24 +656,40 @@ html_content = f"""<!DOCTYPE html>
       color: #e2e8f0;
       white-space: pre;
       line-height: 1.6;
-      height: calc(100% - 44px);
+      flex: 1;
     }}
 
-    .figure-preview {{
+    /* Math Box */
+    .math-card {{
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 12px 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.81rem;
+      color: var(--navy);
+      line-height: 1.5;
+      margin: 12px 0;
+    }}
+
+    .figure-img {{
       width: 100%;
       border-radius: 8px;
       border: 1px solid var(--border);
       box-shadow: var(--shadow-sm);
-      margin-top: 12px;
+      margin-top: 10px;
       background: #ffffff;
     }}
     .figure-caption {{
-      font-size: 0.78rem;
+      font-size: 0.77rem;
       color: var(--text-muted);
       text-align: center;
       margin-top: 6px;
       font-style: italic;
     }}
+
+    .tab-pane {{ display: none; }}
+    .tab-pane.active {{ display: block; }}
 
     footer {{
       background: #ffffff;
@@ -677,10 +708,10 @@ html_content = f"""<!DOCTYPE html>
 </head>
 <body>
 
-  <!-- Top Institutional Bar -->
-  <div class="top-bar">
-    <div class="top-bar-left">
-      <span class="top-bar-badge">BMAT202P</span>
+  <!-- Academic Metadata Bar -->
+  <div class="header-institution">
+    <div class="header-institution-left">
+      <span class="tag-course">BMAT202P</span>
       <span>Probability and Statistics — Experiential Learning Platform</span>
       <span>•</span>
       <span>Vellore Institute of Technology, Chennai</span>
@@ -692,33 +723,69 @@ html_content = f"""<!DOCTYPE html>
     </div>
   </div>
 
-  <!-- Primary Navbar -->
+  <!-- Primary Sticky Navbar -->
   <header class="navbar">
     <a href="#" class="navbar-brand">
-      <div class="brand-mark">🏏</div>
+      <div class="brand-mark">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M12 2a14.5 14.5 0 0 0 0 20"></path>
+          <path d="M2 12h20"></path>
+        </svg>
+      </div>
       <span>CricketEdge</span>
     </a>
+
     <ul class="navbar-nav">
-      <li class="nav-item active" onclick="showTab('overview', this)">Overview</li>
-      <li class="nav-item" onclick="showTab('players', this)">Players</li>
-      <li class="nav-item" onclick="showTab('regression', this)">Regression</li>
-      <li class="nav-item" onclick="showTab('probability', this)">Probability</li>
-      <li class="nav-item" onclick="showTab('hypothesis', this)">Hypothesis Testing</li>
-      <li class="nav-item" onclick="showTab('chisq', this)">Chi-Square</li>
-      <li class="nav-item" onclick="showTab('anova', this)">ANOVA</li>
-      <li class="nav-item" onclick="showTab('data', this)">Data Explorer</li>
-      <li class="nav-item" onclick="showTab('code', this)">R Codebase</li>
+      <li class="nav-item active" onclick="showTab('overview', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+        Overview
+      </li>
+      <li class="nav-item" onclick="showTab('players', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        Players
+      </li>
+      <li class="nav-item" onclick="showTab('regression', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+        Regression
+      </li>
+      <li class="nav-item" onclick="showTab('probability', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><path d="M8 12h8"></path><path d="M12 8v8"></path></svg>
+        Probability
+      </li>
+      <li class="nav-item" onclick="showTab('hypothesis', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10 2v7.31"></path><path d="M14 9.3V2"></path><path d="M8.5 2h7"></path><path d="M14 9.3a6.5 6.5 0 1 1-4 0"></path><path d="M5.52 16h12.96"></path></svg>
+        Hypothesis Testing
+      </li>
+      <li class="nav-item" onclick="showTab('chisq', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg>
+        Chi-Square
+      </li>
+      <li class="nav-item" onclick="showTab('anova', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+        ANOVA
+      </li>
+      <li class="nav-item" onclick="showTab('data', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
+        Data Explorer
+      </li>
+      <li class="nav-item" onclick="showTab('code', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+        R Codebase
+      </li>
     </ul>
+
     <div class="navbar-right">
-      <div class="status-pill">
-        <span class="status-dot"></span> 260 Innings Sample
+      <div class="status-indicator">
+        <span class="status-dot"></span>
+        <span>260 Innings Sample</span>
       </div>
       <a href="CricketEdge_Lab_Report.pdf" target="_blank" class="btn btn-secondary">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
         PDF Report
       </a>
       <a href="CricketEdge_Lab_Report.docx" download class="btn btn-primary">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
         DOCX Report
       </a>
     </div>
@@ -726,62 +793,74 @@ html_content = f"""<!DOCTYPE html>
 
   <main class="main-container">
 
-    <!-- 1. OVERVIEW -->
+    <!-- 1. OVERVIEW TAB -->
     <section id="tab-overview" class="tab-pane active">
-      <div class="kpi-row">
-        <div class="kpi-box navy">
-          <div class="kpi-val">260</div>
-          <div class="kpi-lbl">Total Innings</div>
-          <div class="kpi-sub">50 synthetic matches (T20 format)</div>
+      <!-- High-Precision Metrics Ribbon -->
+      <div class="metrics-ribbon">
+        <div class="metric-cell">
+          <div class="metric-val">260</div>
+          <div class="metric-lbl">Total Innings</div>
+          <div class="metric-sub">50 matches across 6 stadiums</div>
         </div>
-        <div class="kpi-box">
-          <div class="kpi-val">8</div>
-          <div class="kpi-lbl">Elite Batsmen</div>
-          <div class="kpi-sub">India, England, Australia, New Zealand</div>
+        <div class="metric-cell">
+          <div class="metric-val">8</div>
+          <div class="metric-lbl">Elite Batsmen</div>
+          <div class="metric-sub">India, Australia, England, NZ</div>
         </div>
-        <div class="kpi-box emerald">
-          <div class="kpi-val">10,205</div>
-          <div class="kpi-lbl">Total Runs</div>
-          <div class="kpi-sub">Across all sampled venues</div>
+        <div class="metric-cell">
+          <div class="metric-val">10,205</div>
+          <div class="metric-lbl">Tournament Runs</div>
+          <div class="metric-sub">7,492 balls faced in total</div>
         </div>
-        <div class="kpi-box amber">
-          <div class="kpi-val">39.25</div>
-          <div class="kpi-lbl">Mean Innings Score</div>
-          <div class="kpi-sub">Standard Deviation: 26.85 runs</div>
+        <div class="metric-cell">
+          <div class="metric-val">39.25</div>
+          <div class="metric-lbl">Mean Innings Score</div>
+          <div class="metric-sub">Standard Deviation: 26.85 runs</div>
         </div>
-        <div class="kpi-box danger">
-          <div class="kpi-val">136.2</div>
-          <div class="kpi-lbl">Aggregate Strike Rate</div>
-          <div class="kpi-sub">Runs scored per 100 deliveries</div>
+        <div class="metric-cell">
+          <div class="metric-val">136.2</div>
+          <div class="metric-lbl">Aggregate Strike Rate</div>
+          <div class="metric-sub">55.8% runs from boundaries</div>
         </div>
       </div>
 
       <div class="grid-2">
         <div class="card">
-          <div class="card-header-title">
-            <span>Cumulative Runs by Batsman</span>
-            <span class="badge badge-neutral">ggplot2 geom_col</span>
+          <div class="card-header">
+            <div>
+              <div class="card-title">Batsman Performance Ranking</div>
+            </div>
+            <div class="segmented-control">
+              <button class="segment-btn active" onclick="switchOverviewMetric('runs', this)">Runs</button>
+              <button class="segment-btn" onclick="switchOverviewMetric('sr', this)">Strike Rate</button>
+              <button class="segment-btn" onclick="switchOverviewMetric('avg', this)">Average</button>
+            </div>
           </div>
-          <div class="card-subtitle">Aggregate scoring totals across all recorded match innings</div>
+          <div class="card-subtitle">Comparative scoring output across all recorded tournament appearances</div>
           <canvas id="chartRuns" height="230"></canvas>
         </div>
+
         <div class="card">
-          <div class="card-header-title">
-            <span>Score Distribution & Central Tendency</span>
-            <span class="badge badge-neutral">Histogram & Density</span>
+          <div class="card-header">
+            <div>
+              <div class="card-title">Score Distribution &amp; Central Tendency</div>
+            </div>
+            <span class="badge badge-neutral">Mean: 39.3 | Median: 33.0</span>
           </div>
-          <div class="card-subtitle">Empirical scoring frequency grouped by 20-run intervals</div>
+          <div class="card-subtitle">Empirical scoring frequency grouped by 20-run bins</div>
           <canvas id="chartDist" height="230"></canvas>
         </div>
       </div>
 
       <div class="card">
-        <div class="card-header-title">
-          <span>Comprehensive Batsman Summary & Scoring Stability</span>
-          <span class="badge badge-blue">descriptive_stats.R</span>
+        <div class="card-header">
+          <div>
+            <div class="card-title">Batsman Summary &amp; Consistency Metric (Coefficient of Variation)</div>
+          </div>
+          <span class="badge badge-blue">R/descriptive_stats.R</span>
         </div>
-        <div class="card-subtitle">Measures of central tendency, dispersion, boundary conversion, and Coefficient of Variation</div>
-        <div class="table-responsive">
+        <div class="card-subtitle">Formulation: CV = (Standard Deviation / Mean) × 100. Lower values reflect consistent scoring anchors.</div>
+        <div class="table-container">
           <table>
             <thead>
               <tr>
@@ -801,7 +880,7 @@ html_content = f"""<!DOCTYPE html>
             <tbody>
               <tr>
                 <td><strong>V. Kohli</strong></td>
-                <td>India</td>
+                <td><span class="team-badge team-ind">IND</span></td>
                 <td class="text-right tabular">34</td>
                 <td class="text-right tabular"><strong>1,776</strong></td>
                 <td class="text-right tabular">52.2</td>
@@ -814,7 +893,7 @@ html_content = f"""<!DOCTYPE html>
               </tr>
               <tr>
                 <td><strong>J. Root</strong></td>
-                <td>England</td>
+                <td><span class="team-badge team-eng">ENG</span></td>
                 <td class="text-right tabular">36</td>
                 <td class="text-right tabular"><strong>1,576</strong></td>
                 <td class="text-right tabular">43.8</td>
@@ -827,7 +906,7 @@ html_content = f"""<!DOCTYPE html>
               </tr>
               <tr>
                 <td><strong>S. Smith</strong></td>
-                <td>Australia</td>
+                <td><span class="team-badge team-aus">AUS</span></td>
                 <td class="text-right tabular">33</td>
                 <td class="text-right tabular"><strong>1,360</strong></td>
                 <td class="text-right tabular">41.2</td>
@@ -840,7 +919,7 @@ html_content = f"""<!DOCTYPE html>
               </tr>
               <tr>
                 <td><strong>R. Sharma</strong></td>
-                <td>India</td>
+                <td><span class="team-badge team-ind">IND</span></td>
                 <td class="text-right tabular">40</td>
                 <td class="text-right tabular"><strong>1,344</strong></td>
                 <td class="text-right tabular">33.6</td>
@@ -853,7 +932,7 @@ html_content = f"""<!DOCTYPE html>
               </tr>
               <tr>
                 <td><strong>KL Rahul</strong></td>
-                <td>India</td>
+                <td><span class="team-badge team-ind">IND</span></td>
                 <td class="text-right tabular">27</td>
                 <td class="text-right tabular"><strong>1,178</strong></td>
                 <td class="text-right tabular">43.6</td>
@@ -866,7 +945,7 @@ html_content = f"""<!DOCTYPE html>
               </tr>
               <tr>
                 <td><strong>K. Williamson</strong></td>
-                <td>New Zealand</td>
+                <td><span class="team-badge team-nz">NZ</span></td>
                 <td class="text-right tabular">27</td>
                 <td class="text-right tabular"><strong>1,149</strong></td>
                 <td class="text-right tabular">42.6</td>
@@ -879,7 +958,7 @@ html_content = f"""<!DOCTYPE html>
               </tr>
               <tr>
                 <td><strong>G. Maxwell</strong></td>
-                <td>Australia</td>
+                <td><span class="team-badge team-aus">AUS</span></td>
                 <td class="text-right tabular">31</td>
                 <td class="text-right tabular"><strong>918</strong></td>
                 <td class="text-right tabular">29.6</td>
@@ -892,7 +971,7 @@ html_content = f"""<!DOCTYPE html>
               </tr>
               <tr>
                 <td><strong>B. Stokes</strong></td>
-                <td>England</td>
+                <td><span class="team-badge team-eng">ENG</span></td>
                 <td class="text-right tabular">32</td>
                 <td class="text-right tabular"><strong>904</strong></td>
                 <td class="text-right tabular">28.2</td>
@@ -909,18 +988,19 @@ html_content = f"""<!DOCTYPE html>
       </div>
     </section>
 
-    <!-- 2. PLAYERS -->
+    <!-- 2. PLAYERS TAB (SIGNATURE BATTLE PROFILER) -->
     <section id="tab-players" class="tab-pane">
-      <div class="card">
-        <div class="card-header-title">
-          <span>Head-to-Head Batsman Profiler & Radar Comparison</span>
-          <span class="badge badge-blue">Multivariate Benchmarking</span>
+      <div class="h2h-container">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Head-to-Head Batsman Profiler &amp; Radar Arena</div>
+            <div class="card-subtitle" style="margin-top: 4px; margin-bottom: 0;">Direct multivariate comparison across consistency, boundary volume, acceleration, and conversion</div>
+          </div>
+          <span class="badge badge-blue">Interactive Radar</span>
         </div>
-        <div class="card-subtitle">Select any two batsmen to compare scoring stability, strike rate, boundary reliance, and average</div>
 
-        <!-- Interactive Player Pickers -->
-        <div style="display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap;">
-          <div style="flex: 1; min-width: 200px;">
+        <div class="h2h-controls">
+          <div class="player-select-card p1">
             <label class="form-label">Primary Batsman (Blue)</label>
             <select id="selectP1" class="form-control" onchange="updatePlayerComparison()">
               <option value="V. Kohli" selected>V. Kohli (India)</option>
@@ -933,7 +1013,8 @@ html_content = f"""<!DOCTYPE html>
               <option value="B. Stokes">B. Stokes (England)</option>
             </select>
           </div>
-          <div style="flex: 1; min-width: 200px;">
+          <div style="font-weight: 800; font-size: 0.9rem; color: var(--text-faint); padding: 0 10px;">VS</div>
+          <div class="player-select-card p2">
             <label class="form-label">Comparison Batsman (Rose)</label>
             <select id="selectP2" class="form-control" onchange="updatePlayerComparison()">
               <option value="V. Kohli">V. Kohli (India)</option>
@@ -948,171 +1029,192 @@ html_content = f"""<!DOCTYPE html>
           </div>
         </div>
 
-        <!-- Dynamic Head-to-Head KPI Card -->
-        <div class="h2h-grid">
-          <div class="h2h-player-card active-p1" id="p1Card">
-            <div class="h2h-name" id="p1Name">V. Kohli</div>
-            <div class="h2h-team" id="p1Team">India • Pos 3</div>
-            <div style="margin-top: 8px; font-size: 0.82rem; color: var(--text-body);">
-              Avg: <strong id="p1Avg">61.2</strong> | SR: <strong id="p1SR">140.6</strong> | CV: <strong id="p1CV">57.4%</strong>
-            </div>
-          </div>
-          <div class="vs-badge">VS</div>
-          <div class="h2h-player-card active-p2" id="p2Card">
-            <div class="h2h-name" id="p2Name">G. Maxwell</div>
-            <div class="h2h-team" id="p2Team">Australia • Pos 5</div>
-            <div style="margin-top: 8px; font-size: 0.82rem; color: var(--text-body);">
-              Avg: <strong id="p2Avg">30.6</strong> | SR: <strong id="p2SR">152.7</strong> | CV: <strong id="p2CV">94.8%</strong>
-            </div>
-          </div>
-        </div>
-
         <div class="grid-2">
           <div>
             <canvas id="chartPlayerRadar" height="280"></canvas>
           </div>
           <div>
-            <div class="math-callout">
-              <strong>Consistency Metric Formulation:</strong><br/>
-              CV = (Standard Deviation / Sample Mean) × 100<br/><br/>
-              • Lower CV (&lt; 60%): High scoring stability; anchors innings with consistent scoring.<br/>
-              • Higher CV (&gt; 80%): Aggressive high-variance match-winner; trades stability for burst acceleration.
+            <div class="battle-bars" id="battleBarsContainer"></div>
+            <div class="math-card" style="margin-top: 18px;">
+              <strong>Scoring Stability Metric (CV):</strong><br/>
+              CV = (Standard Deviation / Mean) × 100<br/>
+              • Lower CV signifies anchor stability (e.g. Root: 45.1%, Kohli: 57.4%).<br/>
+              • Higher CV signifies high-risk, high-reward burst acceleration (e.g. Maxwell: 94.8%).
             </div>
-            <img src="assets/fig3_player_boxplots.png" alt="Player Boxplots" class="figure-preview" />
-            <div class="figure-caption">Fig 3: Distribution Boxplots (Median & IQR) with Jittered Observations and Mean Diamonds</div>
           </div>
         </div>
       </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Empirical Score Spread (Boxplots, IQR &amp; Diamond Means)</div>
+          <span class="badge badge-neutral">ggplot2 geom_boxplot + geom_jitter</span>
+        </div>
+        <img src="assets/fig3_player_boxplots.png" alt="Player Boxplots" class="figure-img" />
+        <div class="figure-caption">Fig 3: Interquartile ranges, medians, outlier fences, and jittered individual innings scores</div>
+      </div>
     </section>
 
-    <!-- 3. REGRESSION -->
+    <!-- 3. REGRESSION TAB -->
     <section id="tab-regression" class="tab-pane">
       <div class="grid-2">
         <div class="card">
-          <div class="card-header-title">
-            <span>Fitted Simple Linear Model: runs ~ balls_faced</span>
-            <span class="badge badge-pass">OLS Significant</span>
+          <div class="card-header">
+            <div class="card-title">Fitted Simple Linear Model: runs ~ balls_faced</div>
+            <span class="badge badge-pass">R² = 0.8986</span>
           </div>
-          <div class="card-subtitle">Estimating marginal run output per ball faced using base R lm()</div>
-          <div class="code-box">
-# R lm() Formula Execution (R/regression_analysis.R)
-fit &lt;- lm(runs ~ balls_faced, data = cricket_data)
-summary(fit)
-
-Coefficients:
-             Estimate  Std. Error  t value  Pr(&gt;|t|)
-(Intercept)   -0.5891      0.8412    -0.70     0.484
-balls_faced    1.3412      0.0280    47.89   &lt; 2e-16 ***
-
-Multiple R-squared: 0.8986, Adjusted R-squared: 0.8982
-F-statistic: 2,294 on 1 and 259 DF, p-value: &lt; 2.2e-16
+          <div class="card-subtitle">Estimating marginal run output per ball faced via base R lm()</div>
+          <div class="table-container" style="margin-bottom: 14px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Parameter</th>
+                  <th class="text-right">Estimate</th>
+                  <th class="text-right">Std Error</th>
+                  <th class="text-right">t Value</th>
+                  <th class="text-right">p-Value</th>
+                  <th>Significance</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>(Intercept)</code></td>
+                  <td class="text-right tabular">-0.5891</td>
+                  <td class="text-right tabular">0.8412</td>
+                  <td class="text-right tabular">-0.700</td>
+                  <td class="text-right tabular">0.484</td>
+                  <td><span class="badge badge-neutral">ns</span></td>
+                </tr>
+                <tr>
+                  <td><code>balls_faced</code></td>
+                  <td class="text-right tabular"><strong>+1.3412</strong></td>
+                  <td class="text-right tabular">0.0280</td>
+                  <td class="text-right tabular"><strong>47.89</strong></td>
+                  <td class="text-right tabular">&lt; 2e-16</td>
+                  <td><span class="badge badge-pass">*** (p &lt; 0.001)</span></td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <div class="math-callout" style="margin-top: 14px;">
-            <strong>Interpretation:</strong> Each additional delivery faced yields an expected +1.34 runs (t = 47.89, p &lt; 0.001). Model accounts for 89.8% of variance in scoring output.
+          <div class="math-card">
+            <strong>Fitted Equation:</strong> <code>runs = -0.589 + 1.341 * balls_faced</code><br/>
+            F-statistic: 2,294 on 1 and 259 DF, p &lt; 2.2e-16. Residual SE: 8.56 on 259 df.
           </div>
-          <img src="assets/fig4_regression_fit.png" alt="Regression Fit" class="figure-preview" />
-          <div class="figure-caption">Fig 4: Fitted Regression Line against 260 Empirical Innings Observations</div>
+          <img src="assets/fig4_regression_fit.png" alt="Regression Fit" class="figure-img" />
+          <div class="figure-caption">Fig 4: Scatter of observed innings scores against lm() fitted line</div>
         </div>
+
         <div class="card">
-          <div class="card-header-title">
-            <span>Residual Diagnostics & Homoscedasticity</span>
-            <span class="badge badge-neutral">Gauss-Markov Check</span>
+          <div class="card-header">
+            <div class="card-title">Residual Diagnostics &amp; Assumption Checks</div>
+            <span class="badge badge-neutral">Homoscedasticity</span>
           </div>
-          <div class="card-subtitle">Validating constant error variance and linearity assumptions</div>
-          <div class="math-callout">
-            <strong>Residual Diagnostic Evaluation:</strong><br/>
-            e_i = Observed Runs - Fitted Value<br/>
-            • Homoscedasticity: Residuals scatter symmetrically around zero error baseline without fan-shaped heteroscedastic spread.<br/>
-            • Accounting Limitation: Boundary scoring (4s &amp; 6s) represents arithmetic composition rather than exogenous causality.
+          <div class="card-subtitle">Validating constant error variance across predicted scoring ranges</div>
+          <div class="math-card">
+            <strong>Methodological Note on Boundaries:</strong><br/>
+            Regressing runs against boundaries (4s &amp; 6s) produces an artificial R² &gt; 0.95. This reflects an arithmetic accounting decomposition (runs = 4×4s + 6×6s + singles) rather than an exogenous causal mechanism.
           </div>
-          <img src="assets/fig5_regression_residuals.png" alt="Residuals" class="figure-preview" />
-          <div class="figure-caption">Fig 5: Residuals vs Fitted Values with Loess Trend Line</div>
+          <img src="assets/fig5_regression_residuals.png" alt="Residuals" class="figure-img" />
+          <div class="figure-caption">Fig 5: Residuals vs Fitted values with green Loess trend line and red zero-error baseline</div>
         </div>
       </div>
     </section>
 
-    <!-- 4. PROBABILITY -->
+    <!-- 4. PROBABILITY TAB -->
     <section id="tab-probability" class="tab-pane">
       <div class="grid-2">
         <div class="card">
-          <div class="card-header-title">
-            <span>Binomial Distribution B(n = 6, p = 0.25)</span>
-            <span class="badge badge-blue">dbinom() &amp; pbinom()</span>
+          <div class="card-header">
+            <div class="card-title">Binomial Distribution B(n = 6, p = 0.25)</div>
+            <span class="badge badge-blue">dbinom()</span>
           </div>
-          <div class="card-subtitle">Discrete probability model for boundary events in a 6-ball over</div>
-          <div class="code-box">
-# R dbinom() Mass Function (R/probability_models.R)
-support &lt;- 0:6; pmf &lt;- dbinom(support, size = 6, prob = 0.25)
-
-k=0: 17.80% | k=1: 35.60% | k=2: 29.66%
-k=3: 13.18% | k=4:  3.30% | k=5:  0.44% | k=6: 0.02%
-Expected Value E[X] = n * p = 1.50 boundaries | Var(X) = 1.125
+          <div class="card-subtitle">Discrete probability model for boundary occurrences in a 6-ball over</div>
+          <div class="table-container" style="margin-bottom: 12px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Boundaries (k)</th>
+                  <th class="text-right">P(X = k)</th>
+                  <th class="text-right">Cumulative P(X &le; k)</th>
+                  <th>Interpretation</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>k = 0</td><td class="text-right tabular">17.80%</td><td class="text-right tabular">17.80%</td><td>No boundary hit</td></tr>
+                <tr><td>k = 1</td><td class="text-right tabular">35.60%</td><td class="text-right tabular">53.39%</td><td>Single boundary in over</td></tr>
+                <tr><td>k = 2</td><td class="text-right tabular">29.66%</td><td class="text-right tabular">83.06%</td><td>Two boundaries in over</td></tr>
+                <tr><td>k = 3</td><td class="text-right tabular">13.18%</td><td class="text-right tabular">96.24%</td><td>Three boundaries in over</td></tr>
+                <tr><td>k = 4</td><td class="text-right tabular">3.30%</td><td class="text-right tabular">99.54%</td><td>Four boundaries in over</td></tr>
+                <tr><td>k = 5</td><td class="text-right tabular">0.44%</td><td class="text-right tabular">99.98%</td><td>Five boundaries in over</td></tr>
+                <tr><td>k = 6</td><td class="text-right tabular">0.02%</td><td class="text-right tabular">100.00%</td><td>Six boundaries in over</td></tr>
+              </tbody>
+            </table>
           </div>
-          <img src="assets/fig6_binomial_pmf.png" alt="Binomial PMF" class="figure-preview" />
-          <div class="figure-caption">Fig 6: Discrete Impulse Spike Plot matching base R plot(x, px, type="h")</div>
+          <img src="assets/fig6_binomial_pmf.png" alt="Binomial PMF" class="figure-img" />
+          <div class="figure-caption">Fig 6: Discrete impulse needle plot matching base R plot(x, px, type="h")</div>
         </div>
+
         <div class="card">
-          <div class="card-header-title">
-            <span>Continuous Normal Density N(μ = 160, σ = 25)</span>
+          <div class="card-header">
+            <div class="card-title">Continuous Normal Density N(μ = 160, σ = 25)</div>
             <span class="badge badge-blue">dnorm() &amp; pnorm()</span>
           </div>
-          <div class="card-subtitle">Continuous probability density for total team innings scores</div>
-          <div class="code-box">
-# R dnorm() &amp; pnorm() Integration (R/probability_models.R)
-f(x) &lt;- dnorm(x, mean = 160, sd = 25)
-P(140 &lt;= X &lt;= 180) &lt;- pnorm(180, 160, 25) - pnorm(140, 160, 25)
-
-Calculated Probability Interval: 57.63%
-P(X &gt;= 200) = 5.48% (Extreme Upper Innings Score)
+          <div class="card-subtitle">Continuous model for total team innings scores with shaded probability area</div>
+          <div class="math-card">
+            <strong>Exact Interval Probabilities via pnorm():</strong><br/>
+            • P(140 &le; X &le; 180) = pnorm(180) - pnorm(140) = <strong>57.63%</strong><br/>
+            • P(Score &ge; 200) = pnorm(200, lower.tail=FALSE) = <strong>5.48%</strong><br/>
+            • Theoretical Mean = 160.0 | Variance = 625.0
           </div>
-          <img src="assets/fig7_normal_distribution.png" alt="Normal Density" class="figure-preview" />
-          <div class="figure-caption">Fig 7: Continuous Bell Density Curve with Shaded Integral Interval</div>
+          <img src="assets/fig7_normal_distribution.png" alt="Normal Density" class="figure-img" />
+          <div class="figure-caption">Fig 7: Continuous bell density curve with shaded probability interval</div>
         </div>
       </div>
+
       <div class="card">
-        <div class="card-header-title">
-          <span>Monte Carlo Cricket Over Simulation (1,000 Overs)</span>
-          <span class="badge badge-pass">CLT Verified</span>
+        <div class="card-header">
+          <div class="card-title">Monte Carlo Cricket Over Simulation (1,000 Overs)</div>
+          <span class="badge badge-pass">Central Limit Theorem</span>
         </div>
-        <div class="card-subtitle">Empirical validation of sum distribution converging to normality under Central Limit Theorem</div>
+        <div class="card-subtitle">Simulating discrete categorical deliveries and observing convergence toward normality</div>
         <div class="grid-2">
           <div>
-            <div class="math-callout">
-              <strong>Simulation Parameters &amp; Probabilities:</strong><br/>
-              Outcomes: {{0, 1, 2, 3, 4, 6}} with probs {{0.35, 0.35, 0.10, 0.02, 0.12, 0.06}}<br/>
+            <div class="math-card">
+              <strong>Ball-by-Ball Probabilities:</strong><br/>
+              P(0) = 0.35, P(1) = 0.35, P(2) = 0.10, P(3) = 0.02, P(4) = 0.12, P(6) = 0.06<br/><br/>
               • Theoretical Single-Ball Mean: 1.34 runs (Var: 2.82)<br/>
               • Theoretical 6-Ball Over Mean: 8.04 runs (SD: 4.11)<br/>
-              • Empirical Simulation Mean: 8.08 runs (SD: 4.14)<br/>
-              • P(Score ≥ 10 runs in over): 33.7%
+              • Empirical 1,000 Over Mean: 8.08 runs (SD: 4.14)<br/>
+              • Probability of Scoring &ge; 10 Runs in an Over: <strong>33.7%</strong>
             </div>
           </div>
           <div>
-            <img src="assets/fig8_simulation_totals.png" alt="Simulation Totals" class="figure-preview" />
-            <div class="figure-caption">Fig 8: Frequency of 6-ball over run totals across 1,000 Monte Carlo trials</div>
+            <img src="assets/fig8_simulation_totals.png" alt="Simulation Totals" class="figure-img" />
+            <div class="figure-caption">Fig 8: Frequency of 6-ball over totals converging toward normal profile</div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- 5. HYPOTHESIS -->
+    <!-- 5. HYPOTHESIS TESTING TAB -->
     <section id="tab-hypothesis" class="tab-pane">
       <div class="card">
-        <div class="card-header-title">
-          <span>Inferential Statistical Hypothesis Testing Engine</span>
+        <div class="card-header">
+          <div class="card-title">Inferential Statistical Hypothesis Testing Engine</div>
           <span class="badge badge-blue">R/hypothesis_tests.R</span>
         </div>
-        <div class="card-subtitle">Parametric and non-parametric evaluations with formal decisions strictly avoiding naive acceptance of H₀</div>
-        <div class="table-responsive">
+        <div class="card-subtitle">Parametric and non-parametric tests with formal decisions strictly avoiding naive acceptance of H₀</div>
+        <div class="table-container">
           <table>
             <thead>
               <tr>
-                <th>Test Type</th>
+                <th>Test Specification</th>
                 <th>Null Hypothesis (H₀)</th>
                 <th>Alternative (H₁)</th>
-                <th>R Function</th>
-                <th class="text-right">Test Statistic</th>
+                <th>R Base Function</th>
+                <th class="text-right">Statistic</th>
                 <th class="text-right">p-Value</th>
-                <th>Formal Decision</th>
+                <th>Decision (α = 0.05)</th>
               </tr>
             </thead>
             <tbody>
@@ -1159,7 +1261,7 @@ P(X &gt;= 200) = 5.48% (Extreme Upper Innings Score)
                 <td><code>t.test(x, y, paired=TRUE)</code></td>
                 <td class="text-right tabular">t = 0.84 (df = 48)</td>
                 <td class="text-right tabular">0.405</td>
-                <td><span class="badge badge-pass">Fail to Reject H₀ (p &ge; 0.05)</span></td>
+                <td><span class="badge badge-pass">Fail to Reject H₀</span></td>
               </tr>
             </tbody>
           </table>
@@ -1167,137 +1269,145 @@ P(X &gt;= 200) = 5.48% (Extreme Upper Innings Score)
       </div>
     </section>
 
-    <!-- 6. CHI-SQUARE -->
+    <!-- 6. CHI-SQUARE TAB -->
     <section id="tab-chisq" class="tab-pane">
       <div class="grid-2">
         <div class="card">
-          <div class="card-header-title">
-            <span>Chi-Square Goodness-of-Fit Test</span>
+          <div class="card-header">
+            <div class="card-title">Chi-Square Goodness-of-Fit Test</div>
             <span class="badge badge-pass">Uniform Fit Valid</span>
           </div>
           <div class="card-subtitle">Evaluating categorical innings frequencies against uniform condition expectations</div>
-          <div class="code-box">
-# R chisq.test() on Match Conditions (R/chi_square_analysis.R)
-chisq.test(observed_counts, p = rep(1/5, 5))
-
-X-squared = 3.824, df = 4, p-value = 0.4305
-
-Decision Rule at α = 0.05:
-Because p-value (0.4305) &gt;= 0.05, we FAIL TO REJECT H₀.
-Observations conform reasonably to a uniform match condition distribution.
+          <div class="math-card">
+            <strong>R chisq.test() Output:</strong><br/>
+            χ² = 3.824, df = 4, p-value = 0.4305<br/><br/>
+            Decision: Since p &ge; 0.05, we <strong>fail to reject H₀</strong>. The categorical match conditions follow a uniform distribution.
           </div>
-          <img src="assets/fig10_chisq_gof.png" alt="Chi-Square GOF" class="figure-preview" />
+          <img src="assets/fig10_chisq_gof.png" alt="Chi-Square GOF" class="figure-img" />
           <div class="figure-caption">Fig 10: Observed vs Theoretical Expected Cell Counts across Conditions</div>
         </div>
+
         <div class="card">
-          <div class="card-header-title">
-            <span>Contingency &amp; Cochran's Rule Audit</span>
+          <div class="card-header">
+            <div class="card-title">Contingency Independence &amp; Cochran's Audit</div>
             <span class="badge badge-neutral">Independence Test</span>
           </div>
-          <div class="card-subtitle">Contingency independence testing between player dismissal and order position</div>
-          <div class="math-callout">
-            <strong>Cochran's Rule Audit Check:</strong><br/>
-            • Condition 1: Minimum expected cell count ≥ 1.0 (Satisfied: min E_ij = 6.2)<br/>
-            • Condition 2: No more than 20% of cells have E_ij &lt; 5 (Satisfied: 0.0% &lt; 5)<br/>
-            • Contingency χ²: 6.14 (df = 7, p = 0.5234). Result: Fail to reject H₀; dismissals are independent of position.
-          </div>
-          <div class="code-box">
-# Independence Test Table
-cont_table &lt;- table(data$player, data$dismissals)
-chisq.test(cont_table)
-X-squared = 6.14, df = 7, p-value = 0.5234
+          <div class="card-subtitle">Testing independence between batsman dismissal and order position</div>
+          <div class="math-card">
+            <strong>Cochran's Rule Audit:</strong><br/>
+            • Condition 1: Minimum expected cell count &ge; 1.0 (Passed: min E_ij = 6.2)<br/>
+            • Condition 2: No more than 20% cells &lt; 5 (Passed: 0.0% &lt; 5)<br/><br/>
+            χ² = 6.14 (df = 7, p = 0.5234). Dismissal rate is statistically independent of batting order.
           </div>
         </div>
       </div>
     </section>
 
-    <!-- 7. ANOVA -->
+    <!-- 7. ANOVA TAB -->
     <section id="tab-anova" class="tab-pane">
       <div class="card">
-        <div class="card-header-title">
-          <span>One-Way Analysis of Variance: aov(runs ~ player)</span>
+        <div class="card-header">
+          <div class="card-title">One-Way Analysis of Variance: aov(runs ~ player)</div>
           <span class="badge badge-pass">F-Test Significant</span>
         </div>
-        <div class="card-subtitle">Testing between-group mean differences across 8 batsmen with post-hoc Tukey HSD</div>
-        <div class="code-box">
-# R aov() and summary.aov() Execution (R/anova_analysis.R)
-fit_aov &lt;- aov(runs ~ player, data = cricket_data)
-summary(fit_aov)
-
-             Df    Sum Sq  Mean Sq  F value  Pr(&gt;F)
-player        7     9,842   1,406.0    2.164  0.0378 *
-Residuals   253   164,412     649.9
-
-TukeyHSD Significant Pairwise Comparison:
-V. Kohli - G. Maxwell: Difference = +22.6 runs, 95% CI: [+2.4, +42.8], p adj = 0.0284 *
+        <div class="card-subtitle">Evaluating between-group mean differences across 8 batsmen with Tukey HSD post-hoc</div>
+        <div class="table-container" style="margin-bottom: 14px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Source of Variation</th>
+                <th class="text-right">Df</th>
+                <th class="text-right">Sum of Squares</th>
+                <th class="text-right">Mean Square</th>
+                <th class="text-right">F Value</th>
+                <th class="text-right">Pr(&gt;F)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>player (Between Groups)</code></td>
+                <td class="text-right tabular">7</td>
+                <td class="text-right tabular">9,842</td>
+                <td class="text-right tabular">1,406.0</td>
+                <td class="text-right tabular"><strong>2.164</strong></td>
+                <td class="text-right tabular"><strong>0.0378 *</strong></td>
+              </tr>
+              <tr>
+                <td><code>Residuals (Within Groups)</code></td>
+                <td class="text-right tabular">253</td>
+                <td class="text-right tabular">164,412</td>
+                <td class="text-right tabular">649.9</td>
+                <td class="text-right tabular">-</td>
+                <td class="text-right tabular">-</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <img src="assets/fig9_anova_groups.png" alt="ANOVA Boxplot" class="figure-preview" />
+        <div class="math-card">
+          <strong>Tukey HSD Post-Hoc Finding:</strong><br/>
+          V. Kohli vs G. Maxwell: Difference = +22.6 runs, 95% CI: [+2.4, +42.8], p_adj = 0.0284*. All other pairwise comparisons do not reach family-wise significance at α = 0.05.
+        </div>
+        <img src="assets/fig9_anova_groups.png" alt="ANOVA Boxplot" class="figure-img" />
         <div class="figure-caption">Fig 9: Group Score Spread with Overlaid Means and Standard Error Bars</div>
       </div>
     </section>
 
-    <!-- 8. DATA EXPLORER -->
+    <!-- 8. DATA EXPLORER TAB -->
     <section id="tab-data" class="tab-pane">
       <div class="card">
-        <div class="card-header-title">
-          <span>Dataset Schema &amp; Full Innings Records (sample_cricket_data.csv)</span>
+        <div class="card-header">
+          <div>
+            <div class="card-title">Dataset Schema &amp; Full Innings Records (sample_cricket_data.csv)</div>
+            <div class="card-subtitle" style="margin-top: 4px; margin-bottom: 0;">260 reproducible synthetic match records across 8 batsmen</div>
+          </div>
           <button onclick="downloadCSV()" class="btn btn-primary">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
             Download CSV
           </button>
         </div>
-        
-        <!-- Interactive Multi-Parameter Filter Bar -->
-        <div class="filter-bar">
-          <div class="filter-group" style="flex: 1; min-width: 220px;">
-            <span class="filter-label">Search:</span>
-            <input type="text" id="filterInput" placeholder="Filter by player, opponent, venue, ID..." onkeyup="filterData()" class="form-control" />
-          </div>
-          <div class="filter-group">
-            <span class="filter-label">Batsman:</span>
-            <select id="filterPlayer" class="form-control" style="width: auto;" onchange="filterData()">
-              <option value="">All Batsmen</option>
-              <option value="V. Kohli">V. Kohli</option>
-              <option value="J. Root">J. Root</option>
-              <option value="S. Smith">S. Smith</option>
-              <option value="R. Sharma">R. Sharma</option>
-              <option value="KL Rahul">KL Rahul</option>
-              <option value="K. Williamson">K. Williamson</option>
-              <option value="G. Maxwell">G. Maxwell</option>
-              <option value="B. Stokes">B. Stokes</option>
-            </select>
-          </div>
-          <div class="filter-group">
-            <span class="filter-label">Condition:</span>
-            <select id="filterCondition" class="form-control" style="width: auto;" onchange="filterData()">
-              <option value="">All Conditions</option>
-              <option value="Day">Day</option>
-              <option value="Day/Night">Day/Night</option>
-              <option value="Dry/Spin">Dry/Spin</option>
-              <option value="Overcast">Overcast</option>
-              <option value="Pace-friendly">Pace-friendly</option>
-            </select>
-          </div>
+
+        <!-- Filter Controls -->
+        <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; align-items: center;">
+          <input type="text" id="filterInput" placeholder="Search player, opponent, venue, ID..." onkeyup="filterData()" class="form-control" style="max-width: 280px;" />
+          <select id="filterPlayer" class="form-control" style="max-width: 180px;" onchange="filterData()">
+            <option value="">All Batsmen</option>
+            <option value="V. Kohli">V. Kohli</option>
+            <option value="J. Root">J. Root</option>
+            <option value="S. Smith">S. Smith</option>
+            <option value="R. Sharma">R. Sharma</option>
+            <option value="KL Rahul">KL Rahul</option>
+            <option value="K. Williamson">K. Williamson</option>
+            <option value="G. Maxwell">G. Maxwell</option>
+            <option value="B. Stokes">B. Stokes</option>
+          </select>
+          <select id="filterCondition" class="form-control" style="max-width: 180px;" onchange="filterData()">
+            <option value="">All Conditions</option>
+            <option value="Day">Day</option>
+            <option value="Day/Night">Day/Night</option>
+            <option value="Dry/Spin">Dry/Spin</option>
+            <option value="Overcast">Overcast</option>
+            <option value="Pace-friendly">Pace-friendly</option>
+          </select>
           <button class="btn btn-secondary" onclick="resetFilters()">Reset Filters</button>
           <span id="recordCount" style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600; margin-left: auto;">Showing 260 of 260 innings</span>
         </div>
 
-        <div class="table-responsive" style="max-height: 520px; overflow-y: auto;">
+        <div class="table-container" style="max-height: 520px; overflow-y: auto;">
           <table>
             <thead>
               <tr>
-                <th>Match ID</th>
-                <th>Date</th>
-                <th>Batsman</th>
-                <th>Team</th>
-                <th>Opponent</th>
-                <th>Venue</th>
+                <th onclick="sortTable('match_id')">Match ID</th>
+                <th onclick="sortTable('date')">Date</th>
+                <th onclick="sortTable('player')">Batsman</th>
+                <th onclick="sortTable('team')">Team</th>
+                <th onclick="sortTable('opponent')">Opponent</th>
+                <th onclick="sortTable('venue')">Venue</th>
                 <th>Condition</th>
-                <th class="text-right">Inn</th>
-                <th class="text-right">Runs</th>
-                <th class="text-right">Balls</th>
-                <th class="text-right">4s</th>
-                <th class="text-right">6s</th>
+                <th class="text-right" onclick="sortTable('innings')">Inn</th>
+                <th class="text-right" onclick="sortTable('runs')">Runs</th>
+                <th class="text-right" onclick="sortTable('balls_faced')">Balls</th>
+                <th class="text-right" onclick="sortTable('fours')">4s</th>
+                <th class="text-right" onclick="sortTable('sixes')">6s</th>
                 <th class="text-right">SR</th>
                 <th>Status</th>
               </tr>
@@ -1308,18 +1418,21 @@ V. Kohli - G. Maxwell: Difference = +22.6 runs, 95% CI: [+2.4, +42.8], p adj = 0
       </div>
     </section>
 
-    <!-- 9. R CODEBASE EXPLORER -->
+    <!-- 9. R CODEBASE TAB -->
     <section id="tab-code" class="tab-pane">
       <div class="card">
-        <div class="card-header-title">
-          <span>RStudio Modular Codebase Explorer</span>
-          <span style="font-size: 0.8rem; color: var(--primary); font-family: 'JetBrains Mono', monospace; font-weight: 600;">shiny::runApp()</span>
+        <div class="card-header">
+          <div>
+            <div class="card-title">RStudio Modular Codebase Explorer</div>
+            <div class="card-subtitle" style="margin-top: 4px; margin-bottom: 0;">Direct access to all 11 backend R scripts and Shiny reactive modules</div>
+          </div>
+          <span style="font-size: 0.8rem; color: var(--primary); font-family: 'JetBrains Mono', monospace; font-weight: 700;">shiny::runApp()</span>
         </div>
-        <div class="card-subtitle">Browse all production R statistical backend scripts and Shiny reactive modules directly in the browser</div>
-        <div class="code-viewer-layout">
+
+        <div class="code-viewer-grid">
           <div class="file-tree" id="fileTree"></div>
-          <div style="display: flex; flex-direction: column; height: 100%;">
-            <div class="code-viewer-header">
+          <div class="editor-pane">
+            <div class="editor-topbar">
               <span id="activeFileTitle">app.R</span>
               <button class="btn btn-secondary" style="font-size: 0.72rem; padding: 4px 8px;" onclick="copyCode()">
                 <span id="copyBtnText">Copy Code</span>
@@ -1347,19 +1460,22 @@ V. Kohli - G. Maxwell: Difference = +22.6 runs, 95% CI: [+2.4, +42.8], p adj = 0
     const data = {json.dumps(raw_data)};
     const rFiles = {json.dumps(r_code_dict)};
 
-    // Precomputed Player Statistics for Head-to-Head Profiler
+    // Comprehensive Player Profiles
     const playerStats = {{
-      "V. Kohli": {{ team: "India • Pos 3", runs: 1776, inn: 34, mean: 52.2, sd: 30.0, cv: 57.4, sr: 140.6, avg: 61.2, bPct: 58.6, fiftyRate: 50.0 }},
-      "J. Root": {{ team: "England • Pos 3", runs: 1576, inn: 36, mean: 43.8, sd: 19.7, cv: 45.1, sr: 125.9, avg: 60.6, bPct: 45.4, fiftyRate: 36.1 }},
-      "S. Smith": {{ team: "Australia • Pos 3", runs: 1360, inn: 33, mean: 41.2, sd: 22.5, cv: 54.5, sr: 130.5, avg: 59.1, bPct: 48.2, fiftyRate: 30.3 }},
-      "R. Sharma": {{ team: "India • Pos 1", runs: 1344, inn: 40, mean: 33.6, sd: 23.7, cv: 70.5, sr: 134.5, avg: 39.5, bPct: 62.1, fiftyRate: 27.5 }},
-      "KL Rahul": {{ team: "India • Pos 2", runs: 1178, inn: 27, mean: 43.6, sd: 31.7, cv: 72.7, sr: 131.8, avg: 53.5, bPct: 56.4, fiftyRate: 29.6 }},
-      "K. Williamson": {{ team: "New Zealand • Pos 3", runs: 1149, inn: 27, mean: 42.6, sd: 22.2, cv: 52.2, sr: 132.8, avg: 54.7, bPct: 47.9, fiftyRate: 33.3 }},
-      "G. Maxwell": {{ team: "Australia • Pos 5", runs: 918, inn: 31, mean: 29.6, sd: 28.1, cv: 94.8, sr: 152.7, avg: 30.6, bPct: 74.5, fiftyRate: 22.6 }},
-      "B. Stokes": {{ team: "England • Pos 5", runs: 904, inn: 32, mean: 28.2, sd: 21.2, cv: 75.1, sr: 138.7, avg: 33.5, bPct: 53.1, fiftyRate: 12.5 }}
+      "V. Kohli": {{ team: "India", pos: "Pos 3 (Anchor)", runs: 1776, inn: 34, mean: 52.2, sd: 30.0, cv: 57.4, sr: 140.6, avg: 61.2, bPct: 58.6, fiftyRate: 50.0 }},
+      "J. Root": {{ team: "England", pos: "Pos 3 (Anchor)", runs: 1576, inn: 36, mean: 43.8, sd: 19.7, cv: 45.1, sr: 125.9, avg: 60.6, bPct: 45.4, fiftyRate: 36.1 }},
+      "S. Smith": {{ team: "Australia", pos: "Pos 3 (Anchor)", runs: 1360, inn: 33, mean: 41.2, sd: 22.5, cv: 54.5, sr: 130.5, avg: 59.1, bPct: 48.2, fiftyRate: 30.3 }},
+      "R. Sharma": {{ team: "India", pos: "Pos 1 (Opener)", runs: 1344, inn: 40, mean: 33.6, sd: 23.7, cv: 70.5, sr: 134.5, avg: 39.5, bPct: 62.1, fiftyRate: 27.5 }},
+      "KL Rahul": {{ team: "India", pos: "Pos 2 (Opener)", runs: 1178, inn: 27, mean: 43.6, sd: 31.7, cv: 72.7, sr: 131.8, avg: 53.5, bPct: 56.4, fiftyRate: 29.6 }},
+      "K. Williamson": {{ team: "New Zealand", pos: "Pos 3 (Anchor)", runs: 1149, inn: 27, mean: 42.6, sd: 22.2, cv: 52.2, sr: 132.8, avg: 54.7, bPct: 47.9, fiftyRate: 33.3 }},
+      "G. Maxwell": {{ team: "Australia", pos: "Pos 5 (Finisher)", runs: 918, inn: 31, mean: 29.6, sd: 28.1, cv: 94.8, sr: 152.7, avg: 30.6, bPct: 74.5, fiftyRate: 22.6 }},
+      "B. Stokes": {{ team: "England", pos: "Pos 5 (All-Rounder)", runs: 904, inn: 32, mean: 28.2, sd: 21.2, cv: 75.1, sr: 138.7, avg: 33.5, bPct: 53.1, fiftyRate: 12.5 }}
     }};
 
     let radarChartInstance = null;
+    let runsChartInstance = null;
+    let currentSortCol = null;
+    let currentSortAsc = true;
 
     function showTab(id, el) {{
       document.querySelectorAll('.tab-pane').forEach(t => t.classList.remove('active'));
@@ -1367,9 +1483,11 @@ V. Kohli - G. Maxwell: Difference = +22.6 runs, 95% CI: [+2.4, +42.8], p adj = 0
       document.getElementById('tab-' + id).classList.add('active');
       if (el) el.classList.add('active');
 
-      // Trigger resize for Chart.js canvases inside newly displayed tab
       if (id === 'players' && radarChartInstance) {{
         radarChartInstance.resize();
+      }}
+      if (id === 'overview' && runsChartInstance) {{
+        runsChartInstance.resize();
       }}
     }}
 
@@ -1379,11 +1497,12 @@ V. Kohli - G. Maxwell: Difference = +22.6 runs, 95% CI: [+2.4, +42.8], p adj = 0
       items.slice(0, 100).forEach(r => {{
         const tr = document.createElement('tr');
         const sr = r.balls_faced > 0 ? ((r.runs / r.balls_faced) * 100).toFixed(1) : '0.0';
+        const teamClass = r.team === 'India' ? 'team-ind' : r.team === 'Australia' ? 'team-aus' : r.team === 'England' ? 'team-eng' : 'team-nz';
         tr.innerHTML = `
           <td><code style="font-size:0.8rem; font-weight:700;">${{r.match_id}}</code></td>
           <td class="tabular">${{r.date}}</td>
           <td><strong>${{r.player}}</strong></td>
-          <td>${{r.team}}</td>
+          <td><span class="team-badge ${{teamClass}}">${{r.team.substring(0,3).toUpperCase()}}</span></td>
           <td>${{r.opponent}}</td>
           <td>${{r.venue}}</td>
           <td><span class="badge badge-neutral">${{r.match_condition}}</span></td>
@@ -1421,6 +1540,25 @@ V. Kohli - G. Maxwell: Difference = +22.6 runs, 95% CI: [+2.4, +42.8], p adj = 0
       renderTableRows(filtered);
     }}
 
+    function sortTable(col) {{
+      if (currentSortCol === col) {{
+        currentSortAsc = !currentSortAsc;
+      }} else {{
+        currentSortCol = col;
+        currentSortAsc = true;
+      }}
+      data.sort((a, b) => {{
+        let vA = a[col];
+        let vB = b[col];
+        if (typeof vA === 'string') {{
+          return currentSortAsc ? vA.localeCompare(vB) : vB.localeCompare(vA);
+        }} else {{
+          return currentSortAsc ? vA - vB : vB - vA;
+        }}
+      }});
+      filterData();
+    }}
+
     function resetFilters() {{
       document.getElementById('filterInput').value = '';
       document.getElementById('filterPlayer').value = '';
@@ -1432,7 +1570,81 @@ V. Kohli - G. Maxwell: Difference = +22.6 runs, 95% CI: [+2.4, +42.8], p adj = 0
       window.location.href = 'sample_cricket_data.csv';
     }}
 
-    // Setup R Code Explorer
+    // Switch Overview Metric
+    function switchOverviewMetric(metric, btn) {{
+      document.querySelectorAll('.segmented-control .segment-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const labels = ['V. Kohli', 'J. Root', 'S. Smith', 'R. Sharma', 'KL Rahul', 'K. Williamson', 'G. Maxwell', 'B. Stokes'];
+      let values = [];
+      let labelText = '';
+
+      if (metric === 'runs') {{
+        values = [1776, 1576, 1360, 1344, 1178, 1149, 918, 904];
+        labelText = 'Total Runs';
+        runsChartInstance.data.datasets[0].backgroundColor = '#0284c7';
+      }} else if (metric === 'sr') {{
+        values = [140.6, 125.9, 130.5, 134.5, 131.8, 132.8, 152.7, 138.7];
+        labelText = 'Strike Rate';
+        runsChartInstance.data.datasets[0].backgroundColor = '#059669';
+      }} else if (metric === 'avg') {{
+        values = [61.2, 60.6, 59.1, 39.5, 53.5, 54.7, 30.6, 33.5];
+        labelText = 'Batting Average';
+        runsChartInstance.data.datasets[0].backgroundColor = '#0f172a';
+      }}
+
+      runsChartInstance.data.datasets[0].label = labelText;
+      runsChartInstance.data.datasets[0].data = values;
+      runsChartInstance.update();
+    }}
+
+    // Update Player Comparison
+    function updatePlayerComparison() {{
+      const p1 = document.getElementById('selectP1').value;
+      const p2 = document.getElementById('selectP2').value;
+
+      const s1 = playerStats[p1];
+      const s2 = playerStats[p2];
+
+      const container = document.getElementById('battleBarsContainer');
+      const metrics = [
+        {{ name: 'Batting Average', v1: s1.avg, v2: s2.avg, unit: '' }},
+        {{ name: 'Strike Rate', v1: s1.sr, v2: s2.sr, unit: '' }},
+        {{ name: 'Stability Index (100 - CV)', v1: Math.max(0, 100 - s1.cv), v2: Math.max(0, 100 - s2.cv), unit: '%' }},
+        {{ name: 'Boundary Dominance', v1: s1.bPct, v2: s2.bPct, unit: '%' }},
+        {{ name: 'Fifty+ Conversion Rate', v1: s1.fiftyRate, v2: s2.fiftyRate, unit: '%' }}
+      ];
+
+      container.innerHTML = metrics.map(m => {{
+        const total = m.v1 + m.v2;
+        const pct1 = ((m.v1 / total) * 100).toFixed(1);
+        const pct2 = (100 - pct1).toFixed(1);
+        return `
+          <div class="battle-row">
+            <div class="battle-header">
+              <span><strong>${{p1}}:</strong> ${{m.v1.toFixed(1)}}${{m.unit}}</span>
+              <span style="color:var(--text-muted);">${{m.name}}</span>
+              <span><strong>${{p2}}:</strong> ${{m.v2.toFixed(1)}}${{m.unit}}</span>
+            </div>
+            <div class="battle-track">
+              <div class="battle-fill-p1" style="width: ${{pct1}}%;"></div>
+              <div class="battle-fill-p2" style="width: ${{pct2}}%;"></div>
+            </div>
+          </div>
+        `;
+      }}).join('');
+
+      if (radarChartInstance) {{
+        radarChartInstance.data.datasets[0].label = `${{p1}} (${{s1.team}})`;
+        radarChartInstance.data.datasets[0].data = [s1.avg, s1.sr / 2, Math.max(0, 100 - s1.cv), s1.bPct, s1.fiftyRate];
+
+        radarChartInstance.data.datasets[1].label = `${{p2}} (${{s2.team}})`;
+        radarChartInstance.data.datasets[1].data = [s2.avg, s2.sr / 2, Math.max(0, 100 - s2.cv), s2.bPct, s2.fiftyRate];
+        radarChartInstance.update();
+      }}
+    }}
+
+    // Setup Code Viewer
     function setupCodeViewer() {{
       const tree = document.getElementById('fileTree');
       const display = document.getElementById('codeDisplay');
@@ -1442,10 +1654,10 @@ V. Kohli - G. Maxwell: Difference = +22.6 runs, 95% CI: [+2.4, +42.8], p adj = 0
       const filenames = Object.keys(rFiles);
       filenames.forEach((fname, idx) => {{
         const item = document.createElement('div');
-        item.className = 'file-item' + (idx === 0 ? ' active' : '');
-        item.innerHTML = `<span style="font-size:12px;">📄</span> <span>${{fname}}</span>`;
+        item.className = 'file-entry' + (idx === 0 ? ' active' : '');
+        item.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg> <span>${{fname}}</span>`;
         item.onclick = () => {{
-          document.querySelectorAll('.file-item').forEach(i => i.classList.remove('active'));
+          document.querySelectorAll('.file-entry').forEach(i => i.classList.remove('active'));
           item.classList.add('active');
           display.textContent = rFiles[fname];
           headerTitle.textContent = fname;
@@ -1463,50 +1675,21 @@ V. Kohli - G. Maxwell: Difference = +22.6 runs, 95% CI: [+2.4, +42.8], p adj = 0
       const display = document.getElementById('codeDisplay');
       navigator.clipboard.writeText(display.textContent).then(() => {{
         const btn = document.getElementById('copyBtnText');
-        btn.textContent = 'Copied!';
+        btn.textContent = 'Copied to Clipboard!';
         setTimeout(() => {{ btn.textContent = 'Copy Code'; }}, 2000);
       }});
-    }}
-
-    function updatePlayerComparison() {{
-      const p1 = document.getElementById('selectP1').value;
-      const p2 = document.getElementById('selectP2').value;
-
-      const s1 = playerStats[p1];
-      const s2 = playerStats[p2];
-
-      document.getElementById('p1Name').textContent = p1;
-      document.getElementById('p1Team').textContent = s1.team;
-      document.getElementById('p1Avg').textContent = s1.avg.toFixed(1);
-      document.getElementById('p1SR').textContent = s1.sr.toFixed(1);
-      document.getElementById('p1CV').textContent = s1.cv.toFixed(1) + '%';
-
-      document.getElementById('p2Name').textContent = p2;
-      document.getElementById('p2Team').textContent = s2.team;
-      document.getElementById('p2Avg').textContent = s2.avg.toFixed(1);
-      document.getElementById('p2SR').textContent = s2.sr.toFixed(1);
-      document.getElementById('p2CV').textContent = s2.cv.toFixed(1) + '%';
-
-      if (radarChartInstance) {{
-        radarChartInstance.data.datasets[0].label = `${{p1}} (Anchor / Pos 3)`;
-        radarChartInstance.data.datasets[0].data = [s1.avg, s1.sr / 2, Math.max(0, 100 - s1.cv), s1.bPct, s1.fiftyRate];
-
-        radarChartInstance.data.datasets[1].label = `${{p2}} (Comparison Batsman)`;
-        radarChartInstance.data.datasets[1].data = [s2.avg, s2.sr / 2, Math.max(0, 100 - s2.cv), s2.bPct, s2.fiftyRate];
-        radarChartInstance.update();
-      }}
     }}
 
     window.onload = function() {{
       renderTableRows(data);
       setupCodeViewer();
+      updatePlayerComparison();
 
-      // Configure Light-Themed Chart.js Defaults
       Chart.defaults.color = '#64748b';
       Chart.defaults.font.family = "'Plus Jakarta Sans', -apple-system, sans-serif";
 
-      // 1. Runs Chart
-      new Chart(document.getElementById('chartRuns'), {{
+      // Runs Chart
+      runsChartInstance = new Chart(document.getElementById('chartRuns'), {{
         type: 'bar',
         data: {{
           labels: ['V. Kohli', 'J. Root', 'S. Smith', 'R. Sharma', 'KL Rahul', 'K. Williamson', 'G. Maxwell', 'B. Stokes'],
@@ -1515,7 +1698,7 @@ V. Kohli - G. Maxwell: Difference = +22.6 runs, 95% CI: [+2.4, +42.8], p adj = 0
             data: [1776, 1576, 1360, 1344, 1178, 1149, 918, 904],
             backgroundColor: '#0284c7',
             hoverBackgroundColor: '#0369a1',
-            borderRadius: 6
+            borderRadius: 5
           }}]
         }},
         options: {{
@@ -1533,7 +1716,7 @@ V. Kohli - G. Maxwell: Difference = +22.6 runs, 95% CI: [+2.4, +42.8], p adj = 0
           scales: {{
             x: {{
               grid: {{ color: '#f1f5f9' }},
-              ticks: {{ color: '#475569', font: {{ weight: '600' }} }}
+              ticks: {{ color: '#334155', font: {{ weight: '600' }} }}
             }},
             y: {{
               grid: {{ color: '#f1f5f9' }},
@@ -1543,7 +1726,7 @@ V. Kohli - G. Maxwell: Difference = +22.6 runs, 95% CI: [+2.4, +42.8], p adj = 0
         }}
       }});
 
-      // 2. Score Distribution Chart
+      // Score Distribution Chart
       new Chart(document.getElementById('chartDist'), {{
         type: 'bar',
         data: {{
@@ -1553,7 +1736,7 @@ V. Kohli - G. Maxwell: Difference = +22.6 runs, 95% CI: [+2.4, +42.8], p adj = 0
             data: [78, 79, 53, 33, 11, 6],
             backgroundColor: '#0f172a',
             hoverBackgroundColor: '#1e293b',
-            borderRadius: 6
+            borderRadius: 5
           }}]
         }},
         options: {{
@@ -1571,7 +1754,7 @@ V. Kohli - G. Maxwell: Difference = +22.6 runs, 95% CI: [+2.4, +42.8], p adj = 0
           scales: {{
             x: {{
               grid: {{ color: '#f1f5f9' }},
-              ticks: {{ color: '#475569', font: {{ weight: '600' }} }}
+              ticks: {{ color: '#334155', font: {{ weight: '600' }} }}
             }},
             y: {{
               grid: {{ color: '#f1f5f9' }},
@@ -1581,11 +1764,11 @@ V. Kohli - G. Maxwell: Difference = +22.6 runs, 95% CI: [+2.4, +42.8], p adj = 0
         }}
       }});
 
-      // 3. Radar Chart
+      // Radar Chart
       radarChartInstance = new Chart(document.getElementById('chartPlayerRadar'), {{
         type: 'radar',
         data: {{
-          labels: ['Batting Avg', 'Strike Rate / 2', 'Stability (100 - CV)', 'Boundary %', 'Fifty+ Rate'],
+          labels: ['Batting Avg', 'Strike Rate / 2', 'Stability Index', 'Boundary Dominance', 'Fifty+ Rate'],
           datasets: [
             {{
               label: 'V. Kohli (India)',
@@ -1649,4 +1832,4 @@ output_path = os.path.join(SCRIPT_DIR, 'deployment', 'index.html')
 with open(output_path, 'w', encoding='utf-8') as f:
     f.write(html_content)
 
-print(f"Generated CricketEdge Light-Themed Web Portal at {output_path} successfully!")
+print(f"Generated CricketEdge Impeccable Light-Themed Web Portal at {output_path} successfully!")
