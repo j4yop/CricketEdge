@@ -5,26 +5,26 @@
 
 suppressPackageStartupMessages(library(ggplot2))
 
-#' Custom High-Contrast Professional Dark Theme for CricketEdge
+#' Custom High-Contrast Professional Light Theme for CricketEdge
 theme_cricketedge <- function(base_size = 12) {
   theme_minimal(base_size = base_size) +
     theme(
       plot.background = element_rect(fill = "transparent", color = NA),
-      panel.background = element_rect(fill = "#0d1524", color = "#1e293b", linewidth = 0.5),
-      panel.grid.major = element_line(color = "#1e2d42", linewidth = 0.5),
+      panel.background = element_rect(fill = "#ffffff", color = "#e2e8f0", linewidth = 0.5),
+      panel.grid.major = element_line(color = "#f1f5f9", linewidth = 0.5),
       panel.grid.minor = element_blank(),
-      text = element_text(color = "#e2e8f0", family = "sans"),
-      axis.text = element_text(color = "#94a3b8", size = 10),
-      axis.title = element_text(color = "#38bdf8", face = "bold", size = 11),
-      plot.title = element_text(color = "#f8fafc", face = "bold", size = 13, hjust = 0, margin = margin(b = 4)),
-      plot.subtitle = element_text(color = "#94a3b8", size = 10, hjust = 0, margin = margin(b = 8)),
-      plot.caption = element_text(color = "#64748b", size = 8.5, hjust = 1, margin = margin(t = 6)),
-      legend.background = element_rect(fill = "#0d1524", color = "#1e2d42", linewidth = 0.5),
-      legend.text = element_text(color = "#cbd5e1", size = 9.5),
-      legend.title = element_text(color = "#38bdf8", face = "bold", size = 10),
+      text = element_text(color = "#334155", family = "sans"),
+      axis.text = element_text(color = "#64748b", size = 10),
+      axis.title = element_text(color = "#0f172a", face = "bold", size = 11),
+      plot.title = element_text(color = "#0f172a", face = "bold", size = 13, hjust = 0, margin = margin(b = 4)),
+      plot.subtitle = element_text(color = "#64748b", size = 10, hjust = 0, margin = margin(b = 8)),
+      plot.caption = element_text(color = "#94a3b8", size = 8.5, hjust = 1, margin = margin(t = 6)),
+      legend.background = element_rect(fill = "#ffffff", color = "#e2e8f0", linewidth = 0.5),
+      legend.text = element_text(color = "#334155", size = 9.5),
+      legend.title = element_text(color = "#0f172a", face = "bold", size = 10),
       legend.key = element_rect(fill = "transparent", color = NA),
-      strip.background = element_rect(fill = "#1e293b", color = NA),
-      strip.text = element_text(color = "#f8fafc", face = "bold", size = 10.5),
+      strip.background = element_rect(fill = "#f8fafc", color = "#e2e8f0"),
+      strip.text = element_text(color = "#0f172a", face = "bold", size = 10.5),
       plot.margin = margin(t = 10, r = 18, b = 10, l = 10)
     )
 }
@@ -53,7 +53,7 @@ plot_runs_by_player <- function(df) {
   
   ggplot(agg, aes(x = player, y = runs, fill = team)) +
     geom_col(width = 0.68, alpha = 0.92) +
-    geom_text(aes(label = format(runs, big.mark = ",")), hjust = -0.12, color = "#f8fafc", size = 3.6, fontface = "bold") +
+    geom_text(aes(label = format(runs, big.mark = ",")), hjust = -0.12, color = "#0f172a", size = 3.6, fontface = "bold") +
     coord_flip(clip = "off") +
     scale_y_continuous(expand = expansion(mult = c(0, 0.22))) +
     scale_fill_manual(values = c("India" = "#38bdf8", "England" = "#f43f5e", "Australia" = "#fbbf24", "New Zealand" = "#10b981")) +
