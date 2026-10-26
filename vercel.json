@@ -1,0 +1,8 @@
+{
+  "version": 2,
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/", "destination": "/deployment/index.html" },
+    { "source": "/(.*)", "destination": "/deployment/$1" }
+  ]
+}
